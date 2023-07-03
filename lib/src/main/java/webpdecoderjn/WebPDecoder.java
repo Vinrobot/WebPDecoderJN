@@ -1,4 +1,3 @@
-
 package webpdecoderjn;
 
 import com.sun.jna.IntegerType;
@@ -33,7 +32,7 @@ import java.util.logging.Logger;
 
 /**
  * Decode a WebP image using native libraries.
- * 
+ *
  * <p>
  * The native library {@code libwebp_animdecoder} (custom compiled for this from
  * the libwebp project) needs to be made available before any decoding attempts.
@@ -50,17 +49,17 @@ import java.util.logging.Logger;
  * @author tduva
  */
 public class WebPDecoder {
-    
+
     private static final Logger LOGGER = Logger.getLogger(WebPDecoder.class.getName());
-    
+
     //==========================
     // Library Loading
     //==========================
     private static final String LIB_NAME = "libwebp_animdecoder";
-    
+
     private static boolean initialized = false;
     private static Path libPath = null;
-    
+
     /**
      * This function is intended to be used before decoding is attempted (or
      * {@link #test()} is used). Extracts the platform dependent library from
@@ -71,13 +70,13 @@ public class WebPDecoder {
      * mechanism of JNA will be used.
      *
      * @throws IOException When extracting a library fails, in which case it may
-     * not be possible to decode images
+     *                     not be possible to decode images
      * @see #init(boolean)
      */
     public static synchronized void init() throws IOException {
         init(false);
     }
-    
+
     /**
      * This function is intended to be used before decoding is attempted (or
      * {@link #test()} is used). Extracts the platform dependent library from
@@ -88,10 +87,10 @@ public class WebPDecoder {
      * mechanism of JNA will be used.
      *
      * @param nextToJar Check if the native library can be found next to the JAR
-     * (same directory) this class is contained in, otherwise extract from the
-     * JAR as normal
+     *                  (same directory) this class is contained in, otherwise extract from the
+     *                  JAR as normal
      * @throws IOException When extracting a library fails, in which case it may
-     * not be possible to decode images
+     *                     not be possible to decode images
      */
     public static synchronized void init(boolean nextToJar) throws IOException {
         if (!initialized) {
@@ -104,9 +103,9 @@ public class WebPDecoder {
             initialized = true;
         }
     }
-    
+
     private static LibWebP libWebPInstance;
-    
+
     private static synchronized LibWebP lib() {
         if (libWebPInstance == null) {
             libWebPInstance = Native.load(libPath != null ? libPath.toString() : LIB_NAME, LibWebP.class);
@@ -114,7 +113,7 @@ public class WebPDecoder {
         }
         return libWebPInstance;
     }
-    
+
     private static Path findNextToJar() {
         Path jarPath = getJarPath();
         if (jarPath == null) {
@@ -124,31 +123,29 @@ public class WebPDecoder {
             return null;
         }
         if (debugEnabled()) {
-            LOGGER.info("Find library next to JAR: Checking "+jarPath);
+            LOGGER.info("Find library next to JAR: Checking " + jarPath);
         }
         String fileName = null;
         if (Platform.isWindows()) {
-            fileName = LIB_NAME+".dll";
-        }
-        else if (Platform.isLinux()) {
-            fileName = LIB_NAME+".so";
-        }
-        else if (Platform.isMac()) {
-            fileName = LIB_NAME+".dylib";
+            fileName = LIB_NAME + ".dll";
+        } else if (Platform.isLinux()) {
+            fileName = LIB_NAME + ".so";
+        } else if (Platform.isMac()) {
+            fileName = LIB_NAME + ".dylib";
         }
         if (fileName != null) {
             Path libPath = jarPath.resolveSibling(fileName);
             if (Files.isRegularFile(libPath)) {
                 return libPath;
             }
-            libPath = jarPath.resolveSibling("lib"+fileName);
+            libPath = jarPath.resolveSibling("lib" + fileName);
             if (Files.isRegularFile(libPath)) {
                 return libPath;
             }
         }
         return null;
     }
-    
+
     /**
      * Extract the library from the JAR.
      *
@@ -159,18 +156,18 @@ public class WebPDecoder {
     private static Path extractLib(String name) throws IOException {
         return Native.extractFromResourcePath(name).toPath();
     }
-    
+
     /**
      * This will have to be changed if JNA changes the prefix.
      */
     private static final String JNA_TMPLIB_PREFIX = "jna";
-    
+
     /**
      * On Windows JNA can't remove the temp file while it's still in use, so
      * an ".x" file with the same name is created so it can be deleted on the
      * next start. When using the extract function directly that is not done by
      * JNA, so do it here.
-     * 
+     *
      * @param path
      */
     private static void removeLibrary(Path path) {
@@ -187,49 +184,48 @@ public class WebPDecoder {
         }
         try {
             Files.createFile(path.resolveSibling(path.getFileName() + ".x"));
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             if (debugEnabled()) {
                 LOGGER.warning("Couldn't create x file for " + path);
             }
         }
     }
-    
+
     private static boolean debugEnabled() {
         return Objects.equals(System.getProperty("jna.debug_load"), "true");
     }
-    
+
     //==========================
     // Decoding
     //==========================
+
     /**
      * Same as {@link #testEx()} but instead of throwing an exception it only
      * return {@code true} or {@code false}.
-     * 
+     *
      * @return {@code true} if everything seems ok, {@code false} otherwise
      */
     public static boolean test() {
         try {
             testEx();
             return true;
-        }
-        catch (IOException | UnsatisfiedLinkError ex) {
+        } catch (IOException | UnsatisfiedLinkError ex) {
             // Just catch everything, any exception or error counts as a failure
             return false;
         }
     }
-    
+
     /**
      * Decode a test image included in the JAR to check if the native libraries
      * are properly loaded and if everything seems to work.
-     * 
-     * @throws IOException If loading the test image fails
+     *
+     * @throws IOException          If loading the test image fails
      * @throws WebPDecoderException If the decoder encounters an error
      * @throws UnsatisfiedLinkError When there was an issue loading the native
-     * libraries (note that this is an error, not an exception)
+     *                              libraries (note that this is an error, not an exception)
      */
     public static void testEx() throws IOException, WebPDecoderException,
-                                                    UnsatisfiedLinkError {
+            UnsatisfiedLinkError {
         URL url = WebPDecoder.class.getResource("/image/test.webp");
         WebPImage image = decode(getBytesFromURL(url));
         boolean expectedResult = image.canvasWidth == 16 && image.canvasHeight == 16
@@ -240,37 +236,37 @@ public class WebPDecoder {
             throw new WebPDecoderException("Unexpected decode result");
         }
     }
-    
+
     /**
      * Decode a WebP image based on the url in the given String.
-     * 
+     *
      * @param url The url
      * @return A decoded {@link WebPImage}
-     * @throws IOException When loading the data from the url fails
+     * @throws IOException          When loading the data from the url fails
      * @throws WebPDecoderException When the decoder encounters an issue (e.g.
-     * if it's not a valid WebP file)
+     *                              if it's not a valid WebP file)
      * @throws UnsatisfiedLinkError When there was an issue loading the native
-     * libraries (note that this is an error, not an exception)
+     *                              libraries (note that this is an error, not an exception)
      */
     public static WebPImage decodeUrl(String url) throws IOException,
-                                                         WebPDecoderException,
-                                                         UnsatisfiedLinkError {
+            WebPDecoderException,
+            UnsatisfiedLinkError {
         byte[] rawData = getBytesFromURL(new URL(url));
         return decode(rawData);
     }
-    
+
     /**
      * Decode a WebP image.
-     * 
+     *
      * @param rawData The raw bytes of the image
      * @return A decoded {@link WebPImage}
      * @throws WebPDecoderException When the decoder encounters an issue (e.g.
-     * if it's not a valid WebP file)
+     *                              if it's not a valid WebP file)
      * @throws UnsatisfiedLinkError When there was an issue loading the native
-     * libraries (note that this is an error, not an exception)
+     *                              libraries (note that this is an error, not an exception)
      */
     public static WebPImage decode(byte[] rawData) throws WebPDecoderException,
-                                                          UnsatisfiedLinkError {
+            UnsatisfiedLinkError {
         List<WebPImageFrame> frames = new ArrayList<>();
         Pointer bytes = null;
         Pointer decoder = null;
@@ -278,11 +274,11 @@ public class WebPDecoder {
         try {
             bytes = lib().WebPMalloc(rawData.length);
             bytes.write(0, rawData, 0, rawData.length);
-            
+
             LibWebP.WebPData data = new LibWebP.WebPData();
             data.bytes = bytes;
             data.length = new LibWebP.Size_T(rawData.length);
-            
+
             decoder = lib().WebPAnimDecoderNewInternal(data, null, LibWebP.WEBP_DEMUX_ABI_VERSION);
             if (decoder == null) {
                 throw new WebPDecoderException("Failed creating decoder, invalid image?");
@@ -292,24 +288,23 @@ public class WebPDecoder {
             if (lib().WebPAnimDecoderGetInfo(decoder, info) == 0) {
                 throw new WebPDecoderException("Failed getting decoder info");
             }
-            
+
             int prevTimestamp = 0;
             while (lib().WebPAnimDecoderHasMoreFrames(decoder) == 1) {
                 PointerByReference buf = new PointerByReference();
                 IntByReference timestamp = new IntByReference();
-                
+
                 if (lib().WebPAnimDecoderGetNext(decoder, buf, timestamp) == 0) {
                     throw new WebPDecoderException("Error decoding next frame");
                 }
-                
+
                 int delay = timestamp.getValue() - prevTimestamp;
                 prevTimestamp = timestamp.getValue();
-                
+
                 BufferedImage image = createImage(buf.getValue(), info.canvas_width, info.canvas_height);
                 frames.add(new WebPImageFrame(image, timestamp.getValue(), delay));
             }
-        }
-        finally {
+        } finally {
             if (decoder != null) {
                 lib().WebPAnimDecoderDelete(decoder);
             }
@@ -320,7 +315,7 @@ public class WebPDecoder {
         return new WebPImage(frames, info.canvas_width, info.canvas_height,
                 info.loop_count, Color.BLACK, info.frame_count);
     }
-    
+
     private static BufferedImage createImage(Pointer pixelData, int width, int height) {
         if (pixelData != null) {
             int[] pixels = pixelData.getIntArray(0, width * height);
@@ -335,7 +330,7 @@ public class WebPDecoder {
         }
         return null;
     }
-    
+
     public static class WebPDecoderException extends IOException {
 
         private static final long serialVersionUID = 1L;
@@ -345,23 +340,24 @@ public class WebPDecoder {
         }
 
     }
-    
+
     //==========================
     // Decoded Image Classes
     //==========================
+
     /**
      * A decoded image containing the individual frames (for static images just
      * one) and some meta info.
      */
     public static class WebPImage {
-        
+
         public final List<WebPImageFrame> frames;
         public final int canvasWidth;
         public final int canvasHeight;
         public final int loopCount;
         public final Color bgColor;
         public final int frameCount;
-        
+
         private WebPImage(List<WebPImageFrame> frames, int canvasWidth, int canvasHeight,
                           int loopCount, Color bgColor, int frameCount) {
             this.frames = frames;
@@ -371,54 +367,54 @@ public class WebPDecoder {
             this.loopCount = loopCount;
             this.bgColor = bgColor;
         }
-        
+
         @Override
         public String toString() {
             return String.format("%d x %d / %d loops / %d frames %s",
                     canvasWidth, canvasHeight, loopCount, frameCount, frames);
         }
-        
+
     }
-    
+
     /**
      * A single frame of a decoded image.
      */
     public static class WebPImageFrame {
-        
+
         /**
          * The image.
          */
         public final BufferedImage img;
-        
+
         /**
          * Counted from the start of the animation until when to show the frame
          * (in ms).
          */
         public final int timestamp;
-        
+
         /**
          * How long to show the frame (in ms).
          */
         public final int delay;
-        
+
         private WebPImageFrame(BufferedImage img, int timestamp, int delay) {
             this.img = img;
             this.timestamp = timestamp;
             this.delay = delay;
         }
-        
+
         @Override
         public String toString() {
             return String.valueOf(delay);
         }
-        
+
     }
-    
+
     //==========================
     // libwebp
     //==========================
     private interface LibWebP extends Library {
-        
+
         /*
         [webp/types.h]
             // Allocates 'size' bytes of memory. Returns NULL upon error. Memory
@@ -427,16 +423,16 @@ public class WebPDecoder {
             WEBP_EXTERN void* WebPMalloc(size_t size);
         */
         public Pointer WebPMalloc(int size);
-        
+
         /*
         [webp/types.h]
             // Releases memory returned by the WebPDecode*() functions (from decode.h).
             WEBP_EXTERN void WebPFree(void* ptr);
         */
         public void WebPFree(Pointer pointer);
-        
+
         static final int WEBP_DEMUX_ABI_VERSION = 0x0107;
-        
+
         /*
         [webp/demux.h]
             // Internal, version-checked, entry point.
@@ -460,7 +456,7 @@ public class WebPDecoder {
             }
         */
         public Pointer WebPAnimDecoderNewInternal(WebPData webp_data, Structure dec_options, int version);
-        
+
         /*
         [webp/mux_types.h]
             // Data type used to describe 'raw' data, e.g., chunk data
@@ -471,12 +467,12 @@ public class WebPDecoder {
               size_t size;
             };
         */
-        @Structure.FieldOrder({ "bytes", "length" })
+        @Structure.FieldOrder({"bytes", "length"})
         public static class WebPData extends Structure {
             public Pointer bytes;
             public Size_T length;
         }
-        
+
         /*
         [webp/demux.h]
             // Get global information about the animation.
@@ -489,7 +485,7 @@ public class WebPDecoder {
                                                    WebPAnimInfo* info);
         */
         public int WebPAnimDecoderGetInfo(Pointer dec, WebPAnimInfo info);
-        
+
         /*
         [webp/demux.h]
             // Global information about the animation..
@@ -502,7 +498,7 @@ public class WebPDecoder {
               uint32_t pad[4];   // padding for later use
             };
         */
-        @Structure.FieldOrder({ "canvas_width", "canvas_height", "loop_count", "bgcolor", "frame_count", "pad" })
+        @Structure.FieldOrder({"canvas_width", "canvas_height", "loop_count", "bgcolor", "frame_count", "pad"})
         public static class WebPAnimInfo extends Structure {
             public int canvas_width;
             public int canvas_height;
@@ -511,7 +507,7 @@ public class WebPDecoder {
             public int frame_count;
             public int[] pad = new int[4];
         }
-        
+
         /*
         [webp/demux.h]
             // Check if there are more frames left to decode.
@@ -523,7 +519,7 @@ public class WebPDecoder {
             WEBP_EXTERN int WebPAnimDecoderHasMoreFrames(const WebPAnimDecoder* dec);
         */
         public int WebPAnimDecoderHasMoreFrames(Pointer dec);
-        
+
         /*
         [webp/demux.h]
             // Fetch the next frame from 'dec' based on options supplied to
@@ -542,7 +538,7 @@ public class WebPDecoder {
                                                    uint8_t** buf, int* timestamp);
         */
         public int WebPAnimDecoderGetNext(Pointer dec, PointerByReference buf, IntByReference timestamp);
-        
+
         /*
         [webp/demux.h]
             // Deletes the WebPAnimDecoder object.
@@ -551,7 +547,7 @@ public class WebPDecoder {
             WEBP_EXTERN void WebPAnimDecoderDelete(WebPAnimDecoder* dec);
         */
         public void WebPAnimDecoderDelete(Pointer dec);
-        
+
         public static class Size_T extends IntegerType {
 
             private static final long serialVersionUID = 1L;
@@ -566,24 +562,25 @@ public class WebPDecoder {
                 super(Native.SIZE_T_SIZE, value, true);
             }
         }
-        
+
     }
-    
+
     //==========================
     // General Helpers
     //==========================
+
     /**
      * Returns the current platform architecture as interpreted by JNA.
-     * 
+     *
      * @return String containing the current arch
      */
     public static String getArch() {
         return Platform.ARCH;
     }
-    
+
     /**
      * Read all bytes from the given URL.
-     * 
+     *
      * @param url The URL
      * @return A byte array
      * @throws IOException If loading the bytes fails
@@ -595,7 +592,7 @@ public class WebPDecoder {
             return imageData;
         }
     }
-    
+
     private static byte[] readAllBytes(InputStream input) throws IOException {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
@@ -605,7 +602,7 @@ public class WebPDecoder {
         }
         return result.toByteArray();
     }
-    
+
     public static Path getJarPath() {
         try {
             Path jarPath = Paths.get(WebPDecoder.class.getProtectionDomain().getCodeSource().getLocation().toURI());
@@ -615,11 +612,10 @@ public class WebPDecoder {
                 jarPath = null;
             }
             return jarPath;
-        }
-        catch (URISyntaxException ex) {
+        } catch (URISyntaxException ex) {
             LOGGER.warning("jar: " + ex);
             return null;
         }
     }
-    
+
 }

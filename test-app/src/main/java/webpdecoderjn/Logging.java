@@ -1,4 +1,3 @@
-
 package webpdecoderjn;
 
 import java.io.PrintWriter;
@@ -11,7 +10,6 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
- *
  * @author tduva
  */
 public class Logging {
@@ -30,33 +28,33 @@ public class Logging {
         }
 
     }
-    
+
     public static String getStacktraceForLogging(Throwable t) {
         if (t != null) {
             try {
-                return "\n:"+getStacktrace(t);
+                return "\n:" + getStacktrace(t);
             } catch (Exception ex) {
                 return "\n:Error getting stacktrace";
             }
         }
         return "";
     }
-    
+
     public static String getStacktrace(Throwable t) {
         StringWriter sw = new StringWriter();
         t.printStackTrace(new PrintWriter(sw));
         return sw.toString();
     }
-    
+
     public static void installSingleLineLog() {
         // Remove default handlers
         LogManager.getLogManager().reset();
-        
+
         ConsoleHandler c = new ConsoleHandler();
         c.setFormatter(new TextFormatter());
         Logger.getLogger("").addHandler(c);
     }
-    
+
     public static String systemInfo() {
         return String.format("Java: %s (%s / %s) OS: %s (%s/%s)",
                 System.getProperty("java.version"),
@@ -66,5 +64,5 @@ public class Logging {
                 System.getProperty("os.version"),
                 System.getProperty("os.arch"));
     }
-    
+
 }

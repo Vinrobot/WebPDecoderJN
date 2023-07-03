@@ -1,4 +1,3 @@
-
 plugins {
     id "com.github.johnrengelman.shadow" version "6.0.0"
     id 'java-library'
@@ -31,7 +30,7 @@ tasks.jar {
     archiveBaseName.set(rootProject.name)
 }
 tasks.javadoc {
-    title = rootProject.name+" "+version+" API";
+    title = rootProject.name + " " + version + " API"
 }
 tasks.javadocJar {
     archiveBaseName.set(rootProject.name)

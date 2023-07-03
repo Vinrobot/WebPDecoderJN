@@ -1,4 +1,3 @@
-
 package webpdecoderjn;
 
 import java.awt.BorderLayout;
@@ -6,7 +5,6 @@ import java.awt.FlowLayout;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.logging.Logger;
@@ -31,13 +29,13 @@ import webpdecoderjn.WebPDecoder.WebPImageFrame;
  * method, then allows custom images to be loaded and decoded, outputting
  * various debug info in the GUI and to the console. If ran in a headless
  * environment only the test method will be performed and no GUI is opened.
- * 
+ *
  * @author tduva
  */
 public class App {
-    
+
     private static final Logger LOGGER = Logger.getLogger(App.class.getName());
-    
+
     public static void main(String[] args) {
         Logging.installSingleLineLog();
         System.setProperty("jna.debug_load", "true");
@@ -57,7 +55,7 @@ public class App {
         }
         guiTest(url, reps);
     }
-    
+
     private static void guiTest(String url, int reps) {
         SwingUtilities.invokeLater(() -> {
             //--------------------------
@@ -67,31 +65,29 @@ public class App {
                 WebPDecoder.init(true);
                 WebPDecoder.testEx();
                 LOGGER.info("Test decoding ok.");
-            }
-            catch (Exception | UnsatisfiedLinkError ex) {
-                LOGGER.warning("Decoder doesn't work: "+ex);
+            } catch (Exception | UnsatisfiedLinkError ex) {
+                LOGGER.warning("Decoder doesn't work: " + ex);
                 String message = String.format("Decoder doesn't work [%s/%s]",
                         System.getProperty("os.name"), WebPDecoder.getArch());
                 showError(message, ex);
                 return;
             }
-            
+
             //--------------------------
             // No GUI performance test
             //--------------------------
             if (url != null && reps > 0) {
                 try {
                     getImage(url, reps);
-                }
-                catch (IOException ex) {
-                    LOGGER.warning("Error loading image: "+ex);
+                } catch (IOException ex) {
+                    LOGGER.warning("Error loading image: " + ex);
                 }
             }
-            
+
             if (GraphicsEnvironment.isHeadless()) {
                 return;
             }
-            
+
             //--------------------------
             // Continue and show GUI
             //--------------------------
@@ -106,11 +102,11 @@ public class App {
             JButton inputButton = new JButton("Load");
             inputPanel.add(new JScrollPane(input));
             inputPanel.add(inputButton);
-            
+
             JLabel label = new JLabel("Repetitions: ");
             label.setToolTipText("Repeat loading the images this many times to test performance.");
             inputPanel.add(label);
-            
+
             JComboBox<Integer> repSelection = new JComboBox<>(new Integer[]{1, 10, 20, 50, 100, 500, 1000});
             label.setLabelFor(repSelection);
             inputPanel.add(repSelection);
@@ -119,7 +115,7 @@ public class App {
 //            JButton testButton = new JButton("Test");
 //            testButton.addActionListener(e -> test());
 //            inputPanel.add(testButton);
-            
+
             JPanel outputPanel = new JPanel();
             outputPanel.setLayout(new BoxLayout(outputPanel, BoxLayout.Y_AXIS));
             outputPanel.add(new JLabel("<html><body style='padding:5'>Test decoding ok. WebP decoding appears to work."
@@ -142,11 +138,9 @@ public class App {
                         for (WebPImageFrame f : image.frames) {
                             panel.add(new JLabel(String.format("%d", f.delay), new ImageIcon(f.img), SwingConstants.LEFT));
                         }
-                    }
-                    catch (Exception ex) {
+                    } catch (Exception ex) {
                         panel.add(new JLabel("Error: " + ex));
-                    }
-                    catch (UnsatisfiedLinkError ex) {
+                    } catch (UnsatisfiedLinkError ex) {
                         panel.add(new JLabel("Native library not found"));
                     }
                     outputPanel.add(panel);
@@ -155,8 +149,8 @@ public class App {
                 // Adjust size and position
                 frame.pack();
                 Rectangle bounds = frame.getGraphicsConfiguration().getBounds();
-                frame.setSize(Math.min(frame.getWidth(), (int)(bounds.width * 0.8)),
-                        Math.min(frame.getHeight(), (int)(bounds.height * 0.8)));
+                frame.setSize(Math.min(frame.getWidth(), (int) (bounds.width * 0.8)),
+                        Math.min(frame.getHeight(), (int) (bounds.height * 0.8)));
                 frame.setLocationRelativeTo(null);
             });
 
@@ -168,7 +162,7 @@ public class App {
             frame.setVisible(true);
         });
     }
-    
+
     private static String makeImageInfo(ImageResult result) {
         WebPImage image = result.image;
         return String.format("<html><body>%d x %d<br />frames: %d<br />loops: %d<br />bg: %d/%d/%d/%d<br />%dms load",
@@ -177,14 +171,14 @@ public class App {
                 image.bgColor.getRed(), image.bgColor.getGreen(), image.bgColor.getBlue(), image.bgColor.getAlpha(),
                 result.loadTime);
     }
-    
+
     /**
      * Get the image from a line. Looks for a url or otherwise tries a path.
      * Fairly primitive, but should do for this.
-     * 
+     *
      * @param line
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     private static ImageResult getImage(String line, int rep) throws IOException {
         if (rep < 1) {
@@ -201,35 +195,34 @@ public class App {
         LOGGER.info(String.format("Decoding took %dms", duration));
         return new ImageResult(image, duration);
     }
-    
+
     private static byte[] getBytesFromLine(String line) throws IOException {
         URL url;
         line = line.replace("\"", "");
         if (line.startsWith("http")) {
             url = new URL(line);
-        }
-        else {
+        } else {
             url = Paths.get(line).toUri().toURL();
         }
         return WebPDecoder.getBytesFromURL(url);
     }
-    
+
     private static void showError(String message, Throwable ex) {
         if (!GraphicsEnvironment.isHeadless()) {
             JOptionPane.showMessageDialog(null, message + ": " + addLinebreaks(ex.toString(), 100, false));
         }
     }
-    
+
     /**
      * Adds linebreaks to the input, in place of existing space characters, so
      * that each resulting line has the given maximum length. If there is no
      * space character where needed a line may be longer. The added linebreaks
      * don't count into the maximum line length.
      *
-     * @param input The intput to modify
+     * @param input         The intput to modify
      * @param maxLineLength The maximum line length in number of characters
-     * @param html If true, a "&lt;br /&gt;" will be added instead of a \n
-     * @return 
+     * @param html          If true, a "&lt;br /&gt;" will be added instead of a \n
+     * @return
      */
     public static String addLinebreaks(String input, int maxLineLength, boolean html) {
         if (input == null || input.length() <= maxLineLength) {
@@ -238,7 +231,7 @@ public class App {
         String[] words = input.split(" ");
         StringBuilder b = new StringBuilder();
         int lineLength = 0;
-        for (int i=0;i<words.length;i++) {
+        for (int i = 0; i < words.length; i++) {
             String word = words[i];
             if (b.length() > 0
                     && lineLength + word.length() > maxLineLength) {
@@ -257,7 +250,7 @@ public class App {
         }
         return b.toString();
     }
-    
+
     // For custom test
 //    private static Object temp;
 //    
@@ -283,17 +276,17 @@ public class App {
 //            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
-    
+
     private static class ImageResult {
-        
+
         public final WebPImage image;
         public final long loadTime;
-        
+
         public ImageResult(WebPImage image, long loadTime) {
             this.image = image;
             this.loadTime = loadTime;
         }
-        
+
     }
-    
+
 }
