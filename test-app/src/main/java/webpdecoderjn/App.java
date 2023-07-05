@@ -60,13 +60,13 @@ public class App {
             // "Guard clauses"
             //--------------------------
             try {
-                WebPDecoder.init(true);
+                WebPLoader.init(true);
                 WebPDecoder.testEx();
                 LOGGER.info("Test decoding ok.");
             } catch (Exception | UnsatisfiedLinkError ex) {
                 LOGGER.warning("Decoder doesn't work: " + ex);
                 String message = String.format("Decoder doesn't work [%s/%s]",
-                        System.getProperty("os.name"), WebPDecoder.getArch());
+                        System.getProperty("os.name"), WebPLoader.getArch());
                 showError(message, ex);
                 return;
             }
@@ -91,7 +91,7 @@ public class App {
             //--------------------------
             JFrame frame = new JFrame();
             frame.setTitle(String.format("Test WebPDecoder [%s/%s]",
-                    System.getProperty("os.name"), WebPDecoder.getArch()));
+                    System.getProperty("os.name"), WebPLoader.getArch()));
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
             JPanel inputPanel = new JPanel();
