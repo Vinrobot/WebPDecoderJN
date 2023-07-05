@@ -21,8 +21,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import webpdecoderjn.WebPDecoder.WebPImage;
-import webpdecoderjn.WebPDecoder.WebPImageFrame;
 
 /**
  * Simple program to test WebP decoding. Loads the libs and performs the test
