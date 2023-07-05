@@ -33,9 +33,8 @@ public final class WebPLoader {
     }
 
     /**
-     * This function is intended to be used before decoding is attempted (or
-     * {@link #test()} is used). Extracts the platform dependent library from
-     * the JAR to a temp folder chosen by JNA.
+     * This function is intended to be used before decoding is attempted. Extracts
+     * the platform dependent library from the JAR to a temp folder chosen by JNA.
      *
      * <p>
      * When this function is not used the regular native library discovery
@@ -50,9 +49,8 @@ public final class WebPLoader {
     }
 
     /**
-     * This function is intended to be used before decoding is attempted (or
-     * {@link #test()} is used). Extracts the platform dependent library from
-     * the JAR to a temp folder chosen by JNA.
+     * This function is intended to be used before decoding is attempted. Extracts
+     * the platform dependent library from the JAR to a temp folder chosen by JNA.
      *
      * <p>
      * When this function is not used the regular native library discovery

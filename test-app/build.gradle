@@ -12,6 +12,10 @@ repositories {
 
 dependencies {
     implementation project(':lib')
+    implementation project(':lib').sourceSets.test.output
+
+    implementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    implementation 'org.junit.platform:junit-platform-launcher:1.9.3'
 }
 
 application {

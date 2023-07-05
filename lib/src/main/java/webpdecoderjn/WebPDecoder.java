@@ -47,44 +47,6 @@ public class WebPDecoder {
     //==========================
 
     /**
-     * Same as {@link #testEx()} but instead of throwing an exception it only
-     * return {@code true} or {@code false}.
-     *
-     * @return {@code true} if everything seems ok, {@code false} otherwise
-     */
-    public static boolean test() {
-        try {
-            testEx();
-            return true;
-        } catch (IOException | UnsatisfiedLinkError ex) {
-            // Just catch everything, any exception or error counts as a failure
-            return false;
-        }
-    }
-
-    /**
-     * Decode a test image included in the JAR to check if the native libraries
-     * are properly loaded and if everything seems to work.
-     *
-     * @throws IOException          If loading the test image fails
-     * @throws WebPDecoderException If the decoder encounters an error
-     * @throws UnsatisfiedLinkError When there was an issue loading the native
-     *                              libraries (note that this is an error, not an exception)
-     */
-    public static void testEx() throws IOException, WebPDecoderException,
-            UnsatisfiedLinkError {
-        URL url = WebPDecoder.class.getResource("/image/test.webp");
-        WebPImage image = decode(getBytesFromURL(url));
-        boolean expectedResult = image.canvasWidth == 16 && image.canvasHeight == 16
-                && image.frameCount == 2 && image.frames.size() == 2
-                && image.loopCount == 1 && image.frames.get(0).delay == 480
-                && image.frames.get(1).delay == 1280;
-        if (!expectedResult) {
-            throw new WebPDecoderException("Unexpected decode result");
-        }
-    }
-
-    /**
      * Decode a WebP image based on the url in the given String.
      *
      * @param url The url

@@ -7,6 +7,7 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -21,6 +22,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
 /**
  * Simple program to test WebP decoding. Loads the libs and performs the test
@@ -54,6 +62,24 @@ public class App {
         guiTest(url, reps);
     }
 
+    private static void runTests() throws Exception {
+        final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(DiscoverySelectors.selectClass(WebPDecoderTest.class))
+                .build();
+
+        final Launcher launcher = LauncherFactory.create();
+        final SummaryGeneratingListener listener = new SummaryGeneratingListener();
+
+        launcher.registerTestExecutionListeners(listener);
+        launcher.execute(request);
+
+        final TestExecutionSummary summary = listener.getSummary();
+        System.out.println("getTestsFoundCount() - " + summary.getTestsFoundCount());
+        for (final TestExecutionSummary.Failure failure : summary.getFailures()) {
+            throw new Exception("JUnit test failed", failure.getException());
+        }
+    }
+
     private static void guiTest(String url, int reps) {
         SwingUtilities.invokeLater(() -> {
             //--------------------------
@@ -61,10 +87,10 @@ public class App {
             //--------------------------
             try {
                 WebPLoader.init(true);
-                WebPDecoder.testEx();
+                runTests();
                 LOGGER.info("Test decoding ok.");
             } catch (Exception | UnsatisfiedLinkError ex) {
-                LOGGER.warning("Decoder doesn't work: " + ex);
+                LOGGER.log(Level.WARNING, "Decoder doesn't work", ex);
                 String message = String.format("Decoder doesn't work [%s/%s]",
                         System.getProperty("os.name"), WebPLoader.getArch());
                 showError(message, ex);
