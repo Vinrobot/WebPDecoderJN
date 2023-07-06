@@ -1,9 +1,9 @@
 package webpdecoderjn;
 
 import java.io.IOException;
-import java.net.URL;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,22 +13,31 @@ public class WebPDecoderTest {
         WebPLoader.init();
     }
 
-    @Test
-    void decode() throws IOException {
+    @ParameterizedTest
+    @MethodSource("webpdecoderjn.TestResources#getTestImages")
+    void decode(TestResources.TestImage testData) throws IOException {
         // GIVEN
-        final URL imageUrl = WebPDecoderTest.class.getResource("/images/test.webp");
-        final byte[] imageData = WebPDecoder.getBytesFromURL(imageUrl);
+        final byte[] imageData = WebPDecoder.getBytesFromURL(testData.resource());
 
         // WHEN
         WebPImage image = WebPDecoder.decode(imageData);
 
         // THEN
-        assertEquals(16, image.canvasWidth);
-        assertEquals(16, image.canvasHeight);
-        assertEquals(2, image.frameCount);
-        assertEquals(2, image.frames.size());
-        assertEquals(1, image.loopCount);
-        assertEquals(480, image.frames.get(0).delay);
-        assertEquals(1280, image.frames.get(1).delay);
+        assertEquals(testData.width(), image.canvasWidth);
+        assertEquals(testData.height(), image.canvasHeight);
+        assertEquals(testData.loopCount(), image.loopCount);
+
+        final TestResources.TestFrame[] expectedFrames = testData.frames();
+        assertEquals(expectedFrames.length, image.frameCount);
+        assertEquals(expectedFrames.length, image.frames.size());
+
+        for (int i = 0; i < expectedFrames.length; ++i) {
+            final TestResources.TestFrame expectedFrame = expectedFrames[i];
+            final WebPImageFrame actualFrame = image.frames.get(i);
+
+            assertEquals(expectedFrame.width(), actualFrame.img.getWidth());
+            assertEquals(expectedFrame.height(), actualFrame.img.getHeight());
+            assertEquals(expectedFrame.delay(), actualFrame.delay);
+        }
     }
 }

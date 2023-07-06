@@ -1,0 +1,3 @@
+[submodule "lib/src/test/resources/libwebp-test-data"]
+	path = lib/src/test/resources/libwebp-test-data
+	url = https://chromium.googlesource.com/webm/libwebp-test-data.git
