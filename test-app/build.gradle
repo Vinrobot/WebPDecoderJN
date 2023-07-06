@@ -26,6 +26,9 @@ ext.mainClass = 'webpdecoderjn.App'
 mainClassName = mainClass
 
 jar {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+
     manifest {
         attributes(
                 'Main-Class': mainClass,
