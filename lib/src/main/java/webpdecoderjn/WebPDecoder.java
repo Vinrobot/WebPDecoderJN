@@ -42,12 +42,8 @@ import webpdecoderjn.internal.WebPData;
  * @author tduva
  */
 public class WebPDecoder {
-    //==========================
-    // Decoding
-    //==========================
-
     /**
-     * Decode a WebP image based on the url in the given String.
+     * Decode a WebP image based on an url.
      *
      * @param url The url
      * @return A decoded {@link WebPImage}
@@ -57,11 +53,40 @@ public class WebPDecoder {
      * @throws UnsatisfiedLinkError When there was an issue loading the native
      *                              libraries (note that this is an error, not an exception)
      */
-    public static WebPImage decodeUrl(String url) throws IOException,
+    public static WebPImage decode(URL url) throws IOException,
             WebPDecoderException,
             UnsatisfiedLinkError {
-        byte[] rawData = getBytesFromURL(new URL(url));
-        return decode(rawData);
+        final URLConnection c = url.openConnection();
+        try (final InputStream inputStream = c.getInputStream()) {
+            return decode(inputStream);
+        }
+    }
+
+    /**
+     * Decode a WebP image from an InputStream.
+     *
+     * @param inputStream The inputstream
+     * @return A decoded {@link WebPImage}
+     * @throws IOException          When loading the data from the url fails
+     * @throws WebPDecoderException When the decoder encounters an issue (e.g.
+     *                              if it's not a valid WebP file)
+     * @throws UnsatisfiedLinkError When there was an issue loading the native
+     *                              libraries (note that this is an error, not an exception)
+     */
+    public static WebPImage decode(InputStream inputStream) throws IOException,
+            WebPDecoderException,
+            UnsatisfiedLinkError {
+        final byte[] webpData;
+        try (final ByteArrayOutputStream result = new ByteArrayOutputStream()) {
+            final byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
+            }
+            webpData = result.toByteArray();
+        }
+
+        return decode(webpData);
     }
 
     /**
@@ -140,34 +165,5 @@ public class WebPDecoder {
             return new BufferedImage(colorModel, raster, false, new Hashtable<Object, Object>());
         }
         return null;
-    }
-
-    //==========================
-    // General Helpers
-    //==========================
-
-    /**
-     * Read all bytes from the given URL.
-     *
-     * @param url The URL
-     * @return A byte array
-     * @throws IOException If loading the bytes fails
-     */
-    public static byte[] getBytesFromURL(URL url) throws IOException {
-        URLConnection c = url.openConnection();
-        try (InputStream input = c.getInputStream()) {
-            byte[] imageData = readAllBytes(input);
-            return imageData;
-        }
-    }
-
-    private static byte[] readAllBytes(InputStream input) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int length;
-        while ((length = input.read(buffer, 0, buffer.length)) != -1) {
-            result.write(buffer, 0, length);
-        }
-        return result.toByteArray();
     }
 }

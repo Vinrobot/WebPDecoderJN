@@ -1,6 +1,7 @@
 package webpdecoderjn;
 
 import java.io.IOException;
+import java.net.URL;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -17,10 +18,10 @@ public class WebPDecoderTest {
     @MethodSource("webpdecoderjn.TestResources#getTestImages")
     void decode(TestResources.TestImage testData) throws IOException {
         // GIVEN
-        final byte[] imageData = WebPDecoder.getBytesFromURL(testData.resource());
+        final URL imageUrl = testData.resource();
 
         // WHEN
-        WebPImage image = WebPDecoder.decode(imageData);
+        WebPImage image = WebPDecoder.decode(imageUrl);
 
         // THEN
         assertEquals(testData.width(), image.canvasWidth);

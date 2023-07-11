@@ -5,7 +5,9 @@ import java.awt.FlowLayout;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -220,7 +222,7 @@ public class App {
         return new ImageResult(image, duration);
     }
 
-    private static byte[] getBytesFromLine(String line) throws IOException {
+    private static URL getURLFromLine(String line) throws IOException {
         URL url;
         line = line.replace("\"", "");
         if (line.startsWith("http")) {
@@ -228,7 +230,15 @@ public class App {
         } else {
             url = Paths.get(line).toUri().toURL();
         }
-        return WebPDecoder.getBytesFromURL(url);
+        return url;
+    }
+
+    private static byte[] getBytesFromLine(String line) throws IOException {
+        final URL url = getURLFromLine(line);
+        final URLConnection c = url.openConnection();
+        try (final InputStream input = c.getInputStream()) {
+            return input.readAllBytes();
+        }
     }
 
     private static void showError(String message, Throwable ex) {
