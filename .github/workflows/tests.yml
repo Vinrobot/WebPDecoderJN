@@ -5,6 +5,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        java_arch: ['']
+        include:
+        # Java x86 on Windows x64
+        - os: windows-latest
+          java_arch: x86
 
     runs-on: ${{ matrix.os }}
 
@@ -17,6 +22,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          architecture: ${{ matrix.java_arch }}
 
       - name: Gradle Wrapper Validation
         uses: gradle/wrapper-validation-action@v1.0.6
