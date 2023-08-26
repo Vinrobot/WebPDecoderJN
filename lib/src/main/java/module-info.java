@@ -4,4 +4,5 @@ module webpdecoderjn {
     requires java.logging;
 
     exports webpdecoderjn;
+    exports net.vinrobot.imageio.plugins.webp;
 }
