@@ -1,8 +1,12 @@
 package webpdecoderjn;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+
+import webpdecoderjn.internal.LibWebP;
+import webpdecoderjn.internal.WebPAnimDecoder;
+import webpdecoderjn.internal.WebPAnimInfo;
+import webpdecoderjn.internal.WebPData;
+import webpdecoderjn.internal.WebPFrame;
+
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -16,12 +20,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
-import webpdecoderjn.internal.LibWebP;
-import webpdecoderjn.internal.Size_T;
-import webpdecoderjn.internal.WebPAnimInfo;
-import webpdecoderjn.internal.WebPData;
 
 /**
  * Decode a WebP image using native libraries.
@@ -53,9 +52,7 @@ public class WebPDecoder {
      * @throws UnsatisfiedLinkError When there was an issue loading the native
      *                              libraries (note that this is an error, not an exception)
      */
-    public static WebPImage decode(URL url) throws IOException,
-            WebPDecoderException,
-            UnsatisfiedLinkError {
+    public static WebPImage decode(final URL url) throws IOException, UnsatisfiedLinkError {
         final URLConnection c = url.openConnection();
         try (final InputStream inputStream = c.getInputStream()) {
             return decode(inputStream);
@@ -73,9 +70,7 @@ public class WebPDecoder {
      * @throws UnsatisfiedLinkError When there was an issue loading the native
      *                              libraries (note that this is an error, not an exception)
      */
-    public static WebPImage decode(InputStream inputStream) throws IOException,
-            WebPDecoderException,
-            UnsatisfiedLinkError {
+    public static WebPImage decode(final InputStream inputStream) throws IOException, UnsatisfiedLinkError {
         final byte[] webpData;
         try (final ByteArrayOutputStream result = new ByteArrayOutputStream()) {
             final byte[] buffer = new byte[1024];
@@ -99,71 +94,33 @@ public class WebPDecoder {
      * @throws UnsatisfiedLinkError When there was an issue loading the native
      *                              libraries (note that this is an error, not an exception)
      */
-    public static WebPImage decode(byte[] rawData) throws WebPDecoderException,
-            UnsatisfiedLinkError {
+    public static WebPImage decode(final byte[] rawData) throws IOException, UnsatisfiedLinkError {
         final LibWebP lib = WebPLoader.lib();
+        try (final WebPData data = new WebPData(lib, rawData); final WebPAnimDecoder decoder = new WebPAnimDecoder(lib, data)) {
+            final WebPAnimInfo info = decoder.getInfo();
 
-        List<WebPImageFrame> frames = new ArrayList<>();
-        Pointer bytes = null;
-        Pointer decoder = null;
-        WebPAnimInfo info;
-        try {
-            bytes = lib.WebPMalloc(rawData.length);
-            bytes.write(0, rawData, 0, rawData.length);
-
-            WebPData data = new WebPData();
-            data.bytes = bytes;
-            data.length = new Size_T(rawData.length);
-
-            decoder = lib.WebPAnimDecoderNewInternal(data, null, LibWebP.WEBP_DEMUX_ABI_VERSION);
-            if (decoder == null) {
-                throw new WebPDecoderException("Failed creating decoder, invalid image?");
-            }
-
-            info = new WebPAnimInfo();
-            if (lib.WebPAnimDecoderGetInfo(decoder, info) == 0) {
-                throw new WebPDecoderException("Failed getting decoder info");
-            }
-
+            final List<WebPImageFrame> frames = new ArrayList<>();
             int prevTimestamp = 0;
-            while (lib.WebPAnimDecoderHasMoreFrames(decoder) == 1) {
-                PointerByReference buf = new PointerByReference();
-                IntByReference timestamp = new IntByReference();
+            while (decoder.hasMoreFrames()) {
+                final WebPFrame frame = decoder.getNext(info);
 
-                if (lib.WebPAnimDecoderGetNext(decoder, buf, timestamp) == 0) {
-                    throw new WebPDecoderException("Error decoding next frame");
-                }
+                final int timestamp = frame.timestamp();
+                final int delay = timestamp - prevTimestamp;
+                prevTimestamp = timestamp;
 
-                int delay = timestamp.getValue() - prevTimestamp;
-                prevTimestamp = timestamp.getValue();
-
-                BufferedImage image = createImage(buf.getValue(), info.canvas_width, info.canvas_height);
-                frames.add(new WebPImageFrame(image, timestamp.getValue(), delay));
+                BufferedImage image = createImage(frame.pixels(), info.canvasWidth(), info.canvasHeight());
+                frames.add(new WebPImageFrame(image, timestamp, delay));
             }
-        } finally {
-            if (decoder != null) {
-                lib.WebPAnimDecoderDelete(decoder);
-            }
-            if (bytes != null) {
-                lib.WebPFree(bytes);
-            }
+            return new WebPImage(frames, info.canvasWidth(), info.canvasHeight(), info.loopCount(), Color.BLACK, info.frameCount());
         }
-        return new WebPImage(frames, info.canvas_width, info.canvas_height,
-                info.loop_count, Color.BLACK, info.frame_count);
     }
 
-    private static BufferedImage createImage(Pointer pixelData, int width, int height) {
-        if (pixelData != null) {
-            int[] pixels = pixelData.getIntArray(0, width * height);
-
-            ColorModel colorModel = new DirectColorModel(32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
-
-            SampleModel sampleModel = colorModel.createCompatibleSampleModel(width, height);
-            DataBufferInt db = new DataBufferInt(pixels, width * height);
-            WritableRaster raster = WritableRaster.createWritableRaster(sampleModel, db, null);
-
-            return new BufferedImage(colorModel, raster, false, new Hashtable<Object, Object>());
-        }
-        return null;
+    private static BufferedImage createImage(final int[] pixels, final int width, final int height) {
+        assert pixels.length == width * height;
+        final ColorModel colorModel = new DirectColorModel(32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+        final SampleModel sampleModel = colorModel.createCompatibleSampleModel(width, height);
+        final DataBufferInt dataBufferInt = new DataBufferInt(pixels, width * height);
+        final WritableRaster writableRaster = WritableRaster.createWritableRaster(sampleModel, dataBufferInt, null);
+        return new BufferedImage(colorModel, writableRaster, false, null);
     }
 }

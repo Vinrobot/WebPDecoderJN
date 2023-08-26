@@ -15,8 +15,7 @@ public class WebPImage {
     public final Color bgColor;
     public final int frameCount;
 
-    WebPImage(List<WebPImageFrame> frames, int canvasWidth, int canvasHeight,
-              int loopCount, Color bgColor, int frameCount) {
+    WebPImage(List<WebPImageFrame> frames, int canvasWidth, int canvasHeight, int loopCount, Color bgColor, int frameCount) {
         this.frames = frames;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
@@ -27,7 +26,6 @@ public class WebPImage {
 
     @Override
     public String toString() {
-        return String.format("%d x %d / %d loops / %d frames %s",
-                canvasWidth, canvasHeight, loopCount, frameCount, frames);
+        return String.format("%d x %d / %d loops / %d frames %s", canvasWidth, canvasHeight, loopCount, frameCount, frames);
     }
 }

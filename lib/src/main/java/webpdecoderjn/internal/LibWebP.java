@@ -47,7 +47,7 @@ public interface LibWebP extends Library {
                                             WEBP_DEMUX_ABI_VERSION);
         }
     */
-    Pointer WebPAnimDecoderNewInternal(WebPData webp_data, Structure dec_options, int version);
+    Pointer WebPAnimDecoderNewInternal(WebPData.Struct webp_data, Structure dec_options, int version);
 
     /*
     [webp/demux.h]
@@ -60,7 +60,7 @@ public interface LibWebP extends Library {
         WEBP_EXTERN int WebPAnimDecoderGetInfo(const WebPAnimDecoder* dec,
                                                WebPAnimInfo* info);
     */
-    int WebPAnimDecoderGetInfo(Pointer dec, WebPAnimInfo info);
+    int WebPAnimDecoderGetInfo(Pointer dec, WebPAnimInfo.Struct info);
 
     /*
     [webp/demux.h]
