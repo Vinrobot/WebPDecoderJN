@@ -98,8 +98,8 @@ public class WebPImageReader extends ImageReader {
 	}
 
 	@Override
-	public IIOMetadata getStreamMetadata() {
-		return null;
+	public IIOMetadata getStreamMetadata() throws IOException {
+		return new WebPStreamMetadata(this.getWebPAnimInfo());
 	}
 
 	@Override
@@ -118,8 +118,17 @@ public class WebPImageReader extends ImageReader {
 	}
 
 	@Override
-	public IIOMetadata getImageMetadata(final int imageIndex) {
-		return null;
+	public IIOMetadata getImageMetadata(final int imageIndex) throws IOException {
+		this.read(imageIndex);
+
+		if (imageIndex == 0) {
+			final int timestamp = this.frames.get(imageIndex).timestamp;
+			return new WebPImageMetadata(timestamp, timestamp);
+		} else {
+			final int timestamp0 = this.frames.get(imageIndex - 1).timestamp;
+			final int timestamp1 = this.frames.get(imageIndex).timestamp;
+			return new WebPImageMetadata(timestamp1 - timestamp0, timestamp1);
+		}
 	}
 
 	@Override
